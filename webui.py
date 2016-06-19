@@ -162,11 +162,11 @@ the link below:
 This will present a form in which you may set your new password.
 '''
 
-_prov = '<p>You may also login or register using <a href="%(url_path)s?:action=openid">OpenID</a>'
+_prov = '<p>You may also login or register using <a href="/openid_login">OpenID</a>'
 for title, favicon, login in providers:
     _prov += '''
-    <a href="%s"><img src="%s" title="%s"/></a>
-    ''' %  (login, favicon, title)
+    <a href="/openid_login?provider=%s"><img src="%s" title="%s"/></a>
+    ''' %  (title, favicon, title)
 _prov += "</p>"
 unauth_message = '''
 <p>If you are a new user, <a href="%(url_path)s?:action=register_form">please
@@ -1447,6 +1447,11 @@ class WebUI:
         if 'openid_identifier' in self.form:
             self.form['id'] = self.form['openid_identifier']
 
+        qs = cgi.parse_qs(self.env['QUERY_STRING'])
+        if 'id' not in self.form and 'openid.mode' not in qs and self.form.get(':action', '') != 'openid_return':
+            self.write_template('openid.pt', title='OpenID Login')
+            return
+
         self.handler.set_status('200 OK')
         authomatic = authomatic.Authomatic(config=CONFIG, secret=self.config.authomatic_secret,
                                            logging_level=logging.CRITICAL,
@@ -1468,7 +1473,10 @@ class WebUI:
                     self.usercookie = self.store.create_cookie(self.username)
                     self.store.get_token(self.username)
                     self.loggedin = self.authenticated = True
+                else:
+                    return self.fail('OpenID: No associated user for {0}'.format(result_openid_id))
                 return self.home()
+            return self.fail('OpenID: {0}'.format(result.error.message))
 
     def role_form(self):
         ''' A form used to maintain user Roles
@@ -3623,8 +3631,6 @@ class WebUI:
         self.handler.end_headers()
         self.wfile.write(time.strftime("%Y%m%dT%H:%M:%S\n", time.gmtime(time.time())))
 
-    def openid(self):
-        self.write_template('openid.pt', title='OpenID Login')
 
     def claim(self):
         '''Claim an OpenID.'''
@@ -3710,8 +3716,8 @@ class WebUI:
         res = []
         for r in providers:
             r = Provider(*r)
-            r.login = "%s?:action=login&provider=%s" % (self.url_path, r.name)
-            r.claim = "%s?:action=claim&provider=%s" % (self.url_path, r.name)
+            r.login = "/openid_login?provider=%s" % (r.name,)
+            r.claim = "/openid_claim&provider=%s" % (r.name,)
             res.append(r)
         return res
 
