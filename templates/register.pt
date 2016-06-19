@@ -7,7 +7,7 @@
 
     <p tal:condition="python:not data['openid_fields'] and data['new_user']">
     This form allows "traditional" registration (using a password).
-    Users who want to register with their OpenID (e.g. Google
+    Users who want to register with their OAuth or OpenID (e.g. Google
     or Launchpad account) should follow one of the links
     to the right.
     </p>
@@ -20,12 +20,6 @@
     </form>
     <tal:block tal:condition="data/owns_packages">You cannot delete your account since you
     are still listed as owner of some packages.</tal:block>
-    </p>
-    <p>
-    You can use your PyPI account to log into other services supporting <a href="http://en.wikipedia.org/wiki/OpenID">OpenID</a>.
-    You need to first log into PyPI before logging into other services (doing it the other way is prone to phishing attacks).
-    To log in, simply type <b>pypi.python.org</b> into the field asking for an OpenID. Your OpenID is
-    <b>https://pypi.python.org/id/<span tal:replace="data/name"/></b>; you can also use this ID directly to log in.
     </p>
     <form tal:attributes="action app/url_path" method="POST">
       <input type="hidden" name=":action" value="user" />
