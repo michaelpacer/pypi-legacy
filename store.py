@@ -718,15 +718,21 @@ class Store:
         file_urls = []
 
         # uploaded files
-        safe_execute(cursor, '''select filename, python_version, md5_digest
-            from release_files where name=%s''', (name,))
-        for fname, pyversion, md5 in cursor.fetchall():
+        safe_execute(cursor,
+        '''
+        select filename, releases.requires_python, md5_digest
+        from release_files
+        inner join releases
+                on release_files.version=releases.version
+                and release_files.name=releases.name
+        where release_files.name=%s
+        ''', (name,))
+        for fname, requires_python, md5 in cursor.fetchall():
             # Put files first, to have setuptools consider
             # them before going to other sites
-            url = self.gen_file_url(pyversion, name, fname, relative) + \
+            url = self.gen_file_url('<not used arg>', name, fname, relative) + \
                 "#md5=" + md5
-            file_urls.append((url, "internal", fname))
-
+            file_urls.append((url, "internal", fname, requires_python))
         return sorted(file_urls)
 
     def get_uploaded_file_urls(self, name):
